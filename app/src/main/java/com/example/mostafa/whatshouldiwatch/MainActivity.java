@@ -13,9 +13,10 @@ import cz.msebera.android.httpclient.Header;
 
 public class MainActivity extends AppCompatActivity {
 
-    String[] mMoviesList = {"The godfather", "Fight Club", "Scarface","Shawshank Redemption", "True Romance",
-            "Pulp Fiction", "American HistoryX", "Memento", "Road to Perdition", "American Psycho",
-            "The Usual Suspects","Seven", "Philadelphia", "Pulp Fiction"};
+    String[] mMoviesList = {"The godfather", "Fight Club", "Scarface", "Shawshank Redemption", "True Romance",
+            "Pulp Fiction", "American History X", "Memento", "Road to Perdition", "American Psycho",
+            "The Usual Suspects", "Seven", "Philadelphia", "Pulp Fiction", "One Flew Over the Cuckoo's Nest",
+            "Good Will Hunting", "The Prestige", "Raging Bull", "Lock, Stock and Two Smoking Barrels"};
     String mQueryUrl = "";
 
     Response mResponseObj;
@@ -26,11 +27,21 @@ public class MainActivity extends AppCompatActivity {
 
     ListView mResultsList;
 
+    MyDBHandler mDBHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initParameters();
+    }
+
+    /**
+     * initializes parameters
+     */
+    public void initParameters() {
         mAsyncHttpClient = new AsyncHttpClient();
+        mDBHandler = new MyDBHandler(this, null, null, 1);
 
         mQueryUrl = "http://api.themoviedb.org/3/search/movie?api_key=7c3617b11c86a617a16f0552cfa224d1&query=";
         mResultsList = (ListView) findViewById(R.id.resultsListView);
@@ -41,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
      */
     public void generateMovie(View view) {
         String chosenMovieTitle = generateMovieTitle();
+        mDBHandler.addMovie(new Movies(chosenMovieTitle));
         mAsyncHttpClient.get(MainActivity.this, mQueryUrl + chosenMovieTitle, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -50,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
                 mCustomAdapter = new CustomAdapter(MainActivity.this, mResponseObj);
                 mResultsList.setAdapter(mCustomAdapter);
             }
+
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
 
@@ -63,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
      * @return String the title of the chosen movie
      */
     public String generateMovieTitle() {
-        return mMoviesList[((int) (Math.random() * (mMoviesList.length)))];
+        String movieTitle = mMoviesList[((int) (Math.random() * (mMoviesList.length)))];
+        while (mDBHandler.findMovie(movieTitle) != null) {
+            movieTitle = mMoviesList[((int) (Math.random() * (mMoviesList.length)))];
+        }
+        return movieTitle;
     }
 }
